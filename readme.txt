@@ -1,14 +1,14 @@
 === Heat Map Graph ===
-Contributors: exedotcom
+Contributors: exedotcom.ca
 Tags: heatmap, charts, analytics, sql, shortcode
 Requires at least: 6.0
 Tested up to: 6.6
 Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
-Plugin URI: https://github.com/hmamoun/ai-story-maker
+Plugin URI: https://hayan.mamouns.xyz/heat-map-graph-plugin/
 Author: Hayan Mamoun
-Author URI: https://exedotcom.ca
+Author URI: https://hayan.mamouns.xyz/
 
 Create and display heat maps from custom SQL queries. Define row, column, and value fields, select color ranges, and render via shortcode.
 
