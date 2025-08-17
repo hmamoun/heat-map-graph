@@ -105,10 +105,10 @@ if (!class_exists('EXAIG_Heat_Map_Graph')) {
 					'name' => 'Posts per Day per Category (Last 30 Days)',
 					'description' => 'Counts published posts per day by category (last 30 days).',
 					'sql' => "SELECT cat_terms.name AS row_label, DATE(p.post_date) AS col_label, COUNT(*) AS cell_value
-FROM {$prefix}posts p
-JOIN {$prefix}term_relationships tr ON tr.object_id = p.ID
-JOIN {$prefix}term_taxonomy tt ON tt.term_taxonomy_id = tr.term_taxonomy_id AND tt.taxonomy = 'category'
-JOIN {$prefix}terms cat_terms ON cat_terms.term_id = tt.term_id
+FROM {prefix}posts p
+JOIN {prefix}term_relationships tr ON tr.object_id = p.ID
+JOIN {prefix}term_taxonomy tt ON tt.term_taxonomy_id = tr.term_taxonomy_id AND tt.taxonomy = 'category'
+JOIN {prefix}terms cat_terms ON cat_terms.term_id = tt.term_id
 WHERE p.post_type = 'post' AND p.post_status = 'publish' AND p.post_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
 GROUP BY cat_terms.name, DATE(p.post_date)",
 					'row_field' => 'row_label',
@@ -121,13 +121,13 @@ GROUP BY cat_terms.name, DATE(p.post_date)",
 					'name' => 'Number of Post Tags per Category',
 					'description' => 'Counts posts that share each Category (rows) and Tag (columns).',
 					'sql' => "SELECT cat_terms.name AS row_label, tag_terms.name AS col_label, COUNT(DISTINCT p.ID) AS cell_value
-FROM {$prefix}posts p
-JOIN {$prefix}term_relationships tr_cat ON tr_cat.object_id = p.ID
-JOIN {$prefix}term_taxonomy tt_cat ON tt_cat.term_taxonomy_id = tr_cat.term_taxonomy_id AND tt_cat.taxonomy = 'category'
-JOIN {$prefix}terms cat_terms ON cat_terms.term_id = tt_cat.term_id
-JOIN {$prefix}term_relationships tr_tag ON tr_tag.object_id = p.ID
-JOIN {$prefix}term_taxonomy tt_tag ON tt_tag.term_taxonomy_id = tr_tag.term_taxonomy_id AND tt_tag.taxonomy = 'post_tag'
-JOIN {$prefix}terms tag_terms ON tag_terms.term_id = tt_tag.term_id
+FROM {prefix}posts p
+JOIN {prefix}term_relationships tr_cat ON tr_cat.object_id = p.ID
+JOIN {prefix}term_taxonomy tt_cat ON tt_cat.term_taxonomy_id = tr_cat.term_taxonomy_id AND tt_cat.taxonomy = 'category'
+JOIN {prefix}terms cat_terms ON cat_terms.term_id = tt_cat.term_id
+JOIN {prefix}term_relationships tr_tag ON tr_tag.object_id = p.ID
+JOIN {prefix}term_taxonomy tt_tag ON tt_tag.term_taxonomy_id = tr_tag.term_taxonomy_id AND tt_tag.taxonomy = 'post_tag'
+JOIN {prefix}terms tag_terms ON tag_terms.term_id = tt_tag.term_id
 WHERE p.post_type = 'post' AND p.post_status = 'publish'
 GROUP BY cat_terms.name, tag_terms.name", 
 					'row_field' => 'row_label',
@@ -286,10 +286,17 @@ GROUP BY cat_terms.name, tag_terms.name",
 			return rtrim($sql, ";\s\n\r\t");
 		}
 
+		private function replace_prefix_tag($sql) {
+			global $wpdb;
+			$prefix = isset($wpdb->prefix) ? (string) $wpdb->prefix : 'wp_';
+			// Support both {prefix} and legacy {{prefix}} tokens.
+			return str_replace(array('{prefix}', '{{prefix}}'), $prefix, (string) $sql);
+		}
+
 		private function validate_sql_query($sql_query_raw, $row_field, $col_field, $value_field) {
 			global $wpdb;
 			$errors = [];
-			$sql = $this->strip_trailing_semicolon($sql_query_raw);
+			$sql = $this->strip_trailing_semicolon($this->replace_prefix_tag($sql_query_raw));
 
 			if (!preg_match('/^(SELECT|WITH)\s/i', $sql)) {
 				$errors[] = 'Only SELECT queries are allowed.';
@@ -322,7 +329,7 @@ GROUP BY cat_terms.name, tag_terms.name",
 			}
 			$tables = array_unique($tables);
 			foreach ($tables as $t) {
-				if (strpos($t, $prefix) !== 0 && strpos($t, '{{prefix}}') !== 0) {
+				if (strpos($t, $prefix) !== 0) {
 					$errors[] = 'Only queries against WordPress tables are allowed (must start with "' . esc_html($prefix) . '"). Offending table: ' . esc_html($t);
 					break;
 				}
@@ -403,7 +410,7 @@ GROUP BY cat_terms.name, tag_terms.name",
 										<th scope="row"><label for="sql_query">SQL Query</label></th>
 										<td>
 											<textarea name="sql_query" id="sql_query" class="large-text code" rows="8" required placeholder="SELECT row_label AS row_label, col_label AS col_label, cell_value AS cell_value FROM ... GROUP BY row_label, col_label"><?php echo $editing ? esc_textarea($editing['sql_query']) : ''; ?></textarea>
-											<p class="description">Must be a single SELECT statement against WordPress tables. The query must return columns matching the fields below.</p>
+											<p class="description">Must be a single SELECT statement against WordPress tables. Use {prefix} for the site's table prefix (e.g., {prefix}posts). The query must return columns matching the fields below.</p>
 										</td>
 									</tr>
 									<tr>
@@ -524,6 +531,7 @@ GROUP BY cat_terms.name, tag_terms.name",
 			}
 
 			$sql = $this->strip_trailing_semicolon($conf['sql_query']);
+			$sql = $this->replace_prefix_tag($sql);
 			$validation = $this->validate_sql_query($sql, $conf['row_field'], $conf['col_field'], $conf['value_field']);
 			if (!$validation['is_valid']) {
 				return '<div class="exaig-heatmap-error">' . esc_html(implode(' ', $validation['errors'])) . '</div>';
