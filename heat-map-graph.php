@@ -1,9 +1,12 @@
 <?php
 /**
  * Plugin Name: Heat Map Graph
+ * Plugin URI: https://hayan.mamouns.xyz/heat-map-graph-plugin/
  * Description: Create and display heat maps from custom SQL queries. Define row, column, and value fields, select color ranges, and render via shortcode.
  * Version: 1.0.0
- * Author: EXEDOTCOM
+ * Author: Hayan Mamoun
+ * Contributors: hmamoun
+ * Author URI: https://hayan.mamouns.xyz/ , https://exedotcom.ca
  * License: GPLv2 or later
  */
 
@@ -293,6 +296,21 @@ GROUP BY cat_terms.name, tag_terms.name",
 			return str_replace(array('{prefix}', '{{prefix}}'), $prefix, (string) $sql);
 		}
 
+		/**
+		 * Strictly sanitize SQL identifiers (column aliases) to be alphanumeric/underscore only.
+		 * Returns the identifier wrapped in backticks, or an empty string if invalid.
+		 */
+		private function sanitize_identifier($identifier) {
+			$identifier = (string) $identifier;
+			if ($identifier === '') {
+				return '';
+			}
+			if (!preg_match('/^[A-Za-z0-9_]+$/', $identifier)) {
+				return '';
+			}
+			return '`' . $identifier . '`';
+		}
+
 		private function validate_sql_query($sql_query_raw, $row_field, $col_field, $value_field) {
 			global $wpdb;
 			$errors = [];
@@ -337,11 +355,11 @@ GROUP BY cat_terms.name, tag_terms.name",
 
 			$columns_ok = false;
 			if (empty($errors)) {
-				$test_sql = 'SELECT * FROM (' . $sql . ') AS exaig_heatmap_sub LIMIT 1';
+				$test_sql = 'SELECT * FROM (' . $sql . ') AS exaig_heatmap_sub LIMIT %d';
 				$test_row = null;
 				try {
 					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-					$test_row = $wpdb->get_row($test_sql, ARRAY_A);
+					$test_row = $wpdb->get_row($wpdb->prepare($test_sql, 1), ARRAY_A);
 				} catch (Exception $e) {
 					$errors[] = 'SQL error: ' . esc_html($e->getMessage());
 				}
@@ -351,13 +369,20 @@ GROUP BY cat_terms.name, tag_terms.name",
 				}
 				if (!$columns_ok) {
 					// Try a zero-row projection to validate that the columns exist even if there is no data
-					$projection_sql = 'SELECT `'.esc_sql($row_field).'`, `'.esc_sql($col_field).'`, `'.esc_sql($value_field).'` FROM (' . $sql . ') AS exaig_heatmap_sub LIMIT 0';
-					try {
-						// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-						$wpdb->query($projection_sql);
-						$columns_ok = true; // If it runs, the columns exist
-					} catch (Exception $e) {
-						$errors[] = 'The query must return columns named exactly: ' . esc_html($row_field) . ', ' . esc_html($col_field) . ', ' . esc_html($value_field) . '.';
+					$rf = $this->sanitize_identifier($row_field);
+					$cf = $this->sanitize_identifier($col_field);
+					$vf = $this->sanitize_identifier($value_field);
+					if ($rf === '' || $cf === '' || $vf === '') {
+						$errors[] = 'Row/Column/Value field names may only contain letters, numbers, and underscores.';
+					} else {
+						$projection_sql = 'SELECT ' . $rf . ', ' . $cf . ', ' . $vf . ' FROM (' . $sql . ') AS exaig_heatmap_sub LIMIT %d';
+						try {
+							// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+							$wpdb->query($wpdb->prepare($projection_sql, 0));
+							$columns_ok = true; // If it runs, the columns exist
+						} catch (Exception $e) {
+							$errors[] = 'The query must return columns named exactly: ' . esc_html($row_field) . ', ' . esc_html($col_field) . ', ' . esc_html($value_field) . '.';
+						}
 					}
 				}
 			}
