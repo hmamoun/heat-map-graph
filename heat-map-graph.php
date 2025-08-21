@@ -6,7 +6,7 @@
  * Version: 1.0.0
  * Author: Hayan Mamoun
  * Contributors: hmamoun
- * Author URI: https://hayan.mamouns.xyz/ , https://exedotcom.ca
+ * Author URI: https://hayan.mamouns.xyz/ 
  * License: GPLv2 or later
  */
 
@@ -93,7 +93,8 @@ if (!class_exists('EXAIG_Heat_Map_Graph')) {
 
 		private function maybe_seed_samples() {
 			global $wpdb;
-			// Safe: table name is fixed from $wpdb->prefix + literal; add a no-op predicate for PHPCS prepared SQL compliance.
+			// The table name is derived from $wpdb->prefix plus a fixed literal at construction time.
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$count = (int) $wpdb->get_var(
 				$wpdb->prepare("SELECT COUNT(*) FROM {$this->table_name} WHERE %d = %d", 1, 1)
 			);
@@ -168,6 +169,11 @@ GROUP BY cat_terms.name, tag_terms.name",
 				return;
 			}
 			wp_enqueue_style('exaig-heatmap-admin', plugins_url('assets/css/heatmap.css', __FILE__), [], self::VERSION);
+			// Enable WP color picker for color range fields
+			wp_enqueue_style('wp-color-picker');
+			wp_enqueue_script('wp-color-picker');
+			$init_color_picker = 'jQuery(function($){$(".exaig-color-field").each(function(){var $el=$(this);$el.wpColorPicker({defaultColor:$el.data("default-color")||false});});});';
+			wp_add_inline_script('wp-color-picker', $init_color_picker);
 		}
 
 		private function enqueue_public_assets() {
@@ -401,6 +407,7 @@ GROUP BY cat_terms.name, tag_terms.name",
 			$editing_id = isset($_GET['edit']) ? absint($_GET['edit']) : 0;
 			$editing = null;
 			if ($editing_id > 0) {
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 				$editing = $wpdb->get_row($wpdb->prepare('SELECT * FROM ' . $this->table_name . ' WHERE id = %d', $editing_id), ARRAY_A);
 			}
 			// Safe: table name is fixed; add a no-op predicate for PHPCS prepared SQL compliance.
@@ -412,7 +419,9 @@ GROUP BY cat_terms.name, tag_terms.name",
 			settings_errors('exaig_heatmap_messages');
 			?>
 			<div class="wrap">
-				<h1>Heat Map Graph</h1>
+				<h1 class="wp-heading-inline">Heat Map Graph</h1>
+				<a href="<?php echo esc_url( admin_url('admin.php?page=exaig_heat_map_graph') ); ?>" class="page-title-action"><?php esc_html_e('Create New Heat Map', 'heat-map-graph'); ?></a>
+				<hr class="wp-header-end">
 				<div style="display:flex; gap:24px; align-items:flex-start;">
 					<div style="flex:2; min-width:480px;">
 							<h2><?php echo $editing ? esc_html__('Edit Heat Map', 'heat-map-graph') : esc_html__('Add New Heat Map', 'heat-map-graph'); ?></h2>
@@ -452,9 +461,9 @@ GROUP BY cat_terms.name, tag_terms.name",
 									<tr>
 										<th scope="row">Color Range</th>
 										<td>
-											<label>Min <input name="color_min" type="text" class="small-text" value="<?php echo $editing ? esc_attr($editing['color_min']) : '#f0f9e8'; ?>" /></label>
+											<label>Min <input name="color_min" type="text" class="small-text exaig-color-field" data-default-color="#f0f9e8" value="<?php echo $editing ? esc_attr($editing['color_min']) : '#f0f9e8'; ?>" /></label>
 											&nbsp;&nbsp;
-											<label>Max <input name="color_max" type="text" class="small-text" value="<?php echo $editing ? esc_attr($editing['color_max']) : '#084081'; ?>" /></label>
+											<label>Max <input name="color_max" type="text" class="small-text exaig-color-field" data-default-color="#084081" value="<?php echo $editing ? esc_attr($editing['color_max']) : '#084081'; ?>" /></label>
 										</td>
 									</tr>
 									<tr>
@@ -547,6 +556,7 @@ GROUP BY cat_terms.name, tag_terms.name",
 
 		private function render_heatmap_html($id, $max_rows = 0, $max_cols = 0, $is_preview = false) {
 			global $wpdb;
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			$conf = $wpdb->get_row($wpdb->prepare('SELECT * FROM ' . $this->table_name . ' WHERE id = %d', $id), ARRAY_A);
 			if (!$conf) {
 				return '<div class="exaig-heatmap-error">Heat map not found.</div>';
