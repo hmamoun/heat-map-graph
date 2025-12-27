@@ -2,11 +2,11 @@
 /**
  * Plugin Name: Heat Map Graph
  * Plugin URI: https://hayan.mamouns.xyz/heat-map-graph-plugin/
- * Description: Create and display heat maps from custom SQL queries. Define row, column, and value fields, select color ranges, and render via shortcode.
+ * Description: Transform your WordPress data into stunning visualizations! Create interactive heat maps, bar charts, pie charts, and line graphs from SQL queries or external APIs. Free version includes heat maps with SQL data. Premium unlocks multiple chart types, external data sources, interactive filters, CSV export, and linked dashboards.
  * Version: 1.0.0
  * Author: Hayan Mamoun
  * Contributors: hmamoun, exedotcom.ca
- * Tested up to: 6.8
+ * Tested up to: 6.9
  * Author URI: https://hayan.mamouns.xyz/ 
  * License: GPLv2 or later
  */
