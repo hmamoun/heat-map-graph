@@ -3,7 +3,7 @@ Contributors: hmamoun
 Tags: heatmap, charts, analytics, sql, shortcode, visualization, dashboard, data-visualization, bar-chart, pie-chart, line-chart, reporting
 Requires at least: 6.0
 Tested up to: 6.9
-Stable tag: 1.0.0
+Stable tag: 2.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Plugin URI: https://hayan.mamouns.xyz/heat-map-graph-plugin/
@@ -202,6 +202,9 @@ Free users can access documentation and community support. Premium users receive
 
 == Changelog ==
 
+= 2.0.0 =
+* **Version 2.0.0** - Major update with enhanced features and improvements
+
 = 1.0.0 =
 * **Initial Release** - Transform your WordPress data into beautiful visualizations!
 * **Free Features:**
@@ -229,6 +232,11 @@ Free users can access documentation and community support. Premium users receive
   * Caching compatible
 
 == Upgrade Notice ==
+
+= 2.0.0 =
+🚀 **Version 2.0.0 Available!**
+
+We've released version 2.0.0 with enhanced features and improvements. Update now to get the latest features and bug fixes!
 
 = 1.0.0 =
 🎉 **Welcome to Heat Map Graph!**

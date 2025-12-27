@@ -3,7 +3,7 @@
  * Plugin Name: Heat Map Graph
  * Plugin URI: https://hayan.mamouns.xyz/heat-map-graph-plugin/
  * Description: Transform your WordPress data into stunning visualizations! Create interactive heat maps, bar charts, pie charts, and line graphs from SQL queries or external APIs. Free version includes heat maps with SQL data. Premium unlocks multiple chart types, external data sources, interactive filters, CSV export, and linked dashboards.
- * Version: 1.0.0
+ * Version: 2.0.0
  * Author: Hayan Mamoun
  * Contributors: hmamoun, exedotcom.ca
  * Tested up to: 6.9
@@ -25,7 +25,7 @@ if (file_exists(plugin_dir_path(__FILE__) . 'includes/class-freemius-integration
 
 if (!class_exists('EXAIG_Heat_Map_Graph')) {
 	class EXAIG_Heat_Map_Graph {
-		const VERSION = '1.0.0';
+		const VERSION = '2.0.0';
 		const OPTION_DB_VERSION = 'exaig_heatmap_graph_db_version';
 
 		/** @var string */
